@@ -1,0 +1,52 @@
+
+img {
+	display: block;
+	margin: auto auto;
+}
+
+body {
+  background-color: #e1dfda;
+  padding-top: 26px;
+}
+
+#sbo-rt-content {
+  clear: both;
+  margin: 0 auto;
+  padding: 1.25rem;
+  border: 0 solid #ddd;
+  color: #333;
+  font-family: Georgia, "Droid Serif", Times, serif;
+  font-style: normal;
+  font-weight: 400;
+  min-height: 450px;
+  font-size: 118% !important;
+}
+
+#sbo-rt-content div, #sbo-rt-content div.booksection {
+
+  font-family: inherit;
+  margin: 0;
+  padding: 0;
+
+}
+
+p {
+  line-height: 1.4em;
+  font-size: 1.125rem;
+}
+
+
+.indent, #lesson-fragment .noindent, #lesson-fragment .p, #lesson-fragment div.chp .para_indented, #lesson-fragment div > p, #lesson-fragment p, #lesson-fragment p.para_indented, #sbo-rt-content .indent, #sbo-rt-content .noindent, #sbo-rt-content .p, #sbo-rt-content div.chp .para_indented, #sbo-rt-content div > p, #sbo-rt-content p, #sbo-rt-content p.para_indented {
+
+  margin: .75em 0 1.25em !important;
+  text-indent: 0;
+  text-align: inherit;
+  font-family: !inherit important;
+  line-height: 1.5em !important;
+
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
