@@ -20,6 +20,7 @@ body {
   font-weight: 400;
   min-height: 450px;
   font-size: 118% !important;
+	width: 50rem;
 }
 
 #sbo-rt-content div, #sbo-rt-content div.booksection {
