@@ -1,6 +1,5 @@
 #! /usr/bin/python3
 import os
-import pdb
 
 from bs4 import BeautifulSoup
 
@@ -20,7 +19,7 @@ class Main:
         if not os.path.exists(self.out_dir):
             os.makedirs(self.out_dir)
 
-        self.output_printer = TexPrinter(self.out_dir, 'test_output.tex')
+        self.output_printer = TexPrinter(self.out_dir, 'test_output')
         self.out = self._init_io()
 
     def _init_io(self):
