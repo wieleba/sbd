@@ -7,7 +7,7 @@ from tex_printer import TexPrinter
 
 
 def extract_chapters(soup):
-    return soup.find_all('div', id='sbo-rt-content')
+    return soup.find_all('div', class_='page')
 
 
 class Main:
@@ -42,6 +42,7 @@ class Main:
 
 def main():
     m = Main('test.html')
+#    m = Main('optimizing_java_full.html')
     m.write_chapters()
     m.finalize()
 

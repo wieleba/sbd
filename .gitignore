@@ -106,3 +106,9 @@ venv.bak/
 out/
 .download_backup/
 test/
+.idea/
+*.aux
+*.pdf
+*.iml
+*.toc
+*.html
