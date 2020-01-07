@@ -32,7 +32,7 @@ class SafariPage:
         
     def __get_log_in_page(self):
         r = requests.get(Config.LOGIN_URL,headers = self.__get_login_page_headers(),allow_redirects=False)
-        self.log.log_response(r, 'GET', Config.verbose)
+        log_response(r, 'GET', Config.verbose)
         return r 
 
     def log_in(self):
@@ -43,7 +43,7 @@ class SafariPage:
         fd = self.__form_data(csrf_token)
         r = requests.post(Config.LOGIN_URL, headers=self.__post_login_page_headers(),\
                 data=fd, cookies=self.__cookies , allow_redirects=False)
-        self.log.log_response(r, 'POST', Config.verbose)
+        log_response(r, 'POST', Config.verbose)
         self.__update_cookies(r)
         if(r.status_code == 403):
             raise Exception('CSRF error')
@@ -52,7 +52,7 @@ class SafariPage:
     
     def read_content(self, url):
         r = requests.get(url, headers=self.__get_login_page_headers(), cookies = self.__cookies)
-        self.log.log_response(r,'GET',Config.verbose)
+        log_response(r,'GET',Config.verbose)
         return r.text
 
     def __update_cookies(self, r):

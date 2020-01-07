@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import getpass
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from sys import argv
 
 from bs4 import BeautifulSoup
@@ -85,7 +85,7 @@ def str2bool(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise ArgumentTypeError('Boolean value expected.')
 
 
 def usage():
