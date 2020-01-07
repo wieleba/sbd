@@ -26,6 +26,10 @@ def sanitize_lstlisting(text):
     return text.replace(u'\u00A9', '\\textcopyright\\')
 
 
+def sanitize_single_line_code_listing(text):
+    return text.strip().replace('\r', '').replace('\n', '').replace(u'\u00A9', '\\textcopyright\\').replace('_', '\\_')
+
+
 def sanitize(text):
     t = text.strip()
     return (t if t.startswith(',') or t.startswith('.') else ' ' + t) \
@@ -49,12 +53,14 @@ class TexPrinter:
         self.out_file_name = out_file_name
         self.out = None
         self.figure_id = 1
+        self.decoder = GeneralHtmlDecoder(self)
 
     def preamble(self):
         try:
             a = open(os.path.join(self.out_dir, self.out_file_name + '.tex'), 'w')
             a.write(preamble)
             self.out = a
+            self.decoder.init(self.out)
             return a
         except IOError:
             print('Can\'t open ', self.out_file_name)
@@ -69,12 +75,26 @@ class TexPrinter:
 
     def write_content(self, content):
         self.out.write('\n')
-        self.decode_children(content)
+        self.decoder.decode_children(content)
 
-    def decode(self, element, use_mono_font=True, sanitize_listing=False, end_with_space=True):
+
+class Decoder:
+    def __init__(self, tex_printer, sanitizer):
+        self.tex_printer = tex_printer
+        self.sanitizer = sanitizer
+        self.out = tex_printer.out
+
+    def init(self, out):
+        self.out = out
+
+    def decode_children(self, element):
+        for child in element.children:
+            self.decode(child)
+
+    def decode(self, element):
         name = element.name
         if isinstance(element, NavigableString):
-            self.write_text(element, sanitize_listing, end_with_space)
+            self.write_text(element)
         elif 'figure' == name:
             self.handle_figure(element)
         elif 'section' == name:
@@ -102,7 +122,7 @@ class TexPrinter:
         elif 'br' == name:
             self.out.write('\n\n')
         elif 'code' == name:
-            self.handle_code(element, sanitize_listing, use_mono_font)
+            self.handle_code(element)
         elif 'pre' == name:
             self.handle_pre(element)
         else:
@@ -113,22 +133,33 @@ class TexPrinter:
     def handle_div(self, element):
         self.decode_children(element)
 
-    def handle_code(self, element, sanitize_listing, use_mono_font):
-        if use_mono_font:
-            self.out.write('{\\ttfamily ')
-        self.decode_children(element, sanitize_listing=sanitize_listing, end_with_space=False)
-        if use_mono_font:
-            self.out.write('}')
+    def write_text(self, element):
+        trimmed_text = self.sanitizer(element)
+        if len(trimmed_text) > 0:
+            self.tex_printer.out.write(trimmed_text)
+            self.tex_printer.out.write(' ')
 
     def handle_pre(self, element):
         # if element.has_attr('data-code-language'):
         # self.out.write('\n\\begin[' + element['data-code-language'] + ']{lstlisting}\n')
         # else:
-        self.out.write('\\ttfamily\n')
-        self.out.write('\n\\begin{lstlisting}\n')
-        self.decode_children(element, use_mono_font=False, sanitize_listing=True)
-        self.out.write('\n\\end{lstlisting}\n')
-        self.out.write('\\rmfamily\n')
+        def inner_handle_pre(self):
+            self.out.write('\\ttfamily\n')
+            self.out.write('\n\\begin{lstlisting}\n')
+            self.decode_children(element)
+            self.out.write('\n\\end{lstlisting}\n')
+            self.out.write('\\rmfamily\n')
+
+        self.do_with_new_decoder(PreElementDecoder(self.tex_printer), inner_handle_pre)
+
+    def do_with_new_decoder(self, decoder, code_block):
+        _original_decoder = self.tex_printer.decoder
+        self.tex_printer.decoder = decoder
+        code_block(decoder)
+        self.tex_printer.decoder = _original_decoder
+
+    def handle_code(self, element):
+        pass
 
     def handle_list_item(self, element):
         self.out.write('\n\\item ')
@@ -145,11 +176,11 @@ class TexPrinter:
         self.out.write('\n\\end{quotation}\n')
 
     def handle_figure(self, element):
-        figure_id_str = str(self.figure_id)
+        figure_id_str = str(self.tex_printer.figure_id)
         self.out.write('\\begin{figure}\n')
         self.out.write('\\centering\n')
         self.out.write('\\includegraphics{test/' + element.find('img')['src'] + '}\n')
-        self.figure_id += 1
+        self.tex_printer.figure_id += 1
         caption = None
         if element.div is not None:
             caption = re.sub('Figure\ \d+-\d+\.\s+', '', element.div.h6.text.strip())
@@ -208,7 +239,7 @@ class TexPrinter:
         else:
             title = 'None title'
         if 'chapter' == section_type:
-            self.handle_chapter(element, title)
+            self.handle_chapter(title)
         elif 'titlepage' == section_type:
             self.handle_title_page(element, title)
         elif 'sect1' == section_type:
@@ -222,7 +253,7 @@ class TexPrinter:
 
         self.decode_children(element)
 
-    def handle_chapter(self, element, title):
+    def handle_chapter(self, title):
         _title = re.sub('Chapter\ \\d+\.\ ', '', title.strip())
         print('Extracted chapter title:', _title)
         self.out.write('\\chapter{' + _title + '}\n')
@@ -230,13 +261,36 @@ class TexPrinter:
     def handle_title_page(self, element, title):
         self.out.write('\\chapter*{' + title.strip() + '}\n')
 
-    def decode_children(self, element, use_mono_font=True, sanitize_listing=False, end_with_space=True):
-        for child in element.children:
-            self.decode(child, use_mono_font, sanitize_listing, end_with_space)
 
-    def write_text(self, element, sanitize_listing=False, end_with_space=True):
-        trimmed_text = sanitize_lstlisting(element) if sanitize_listing else sanitize(element)
+class GeneralHtmlDecoder(Decoder):
+    def __init__(self, tex_printer):
+        super().__init__(tex_printer, sanitize)
+
+    def handle_code(self, element):
+        def inner_handle_code(self):
+            self.out.write('{\\ttfamily ')
+            self.decode_children(element)
+            self.out.write('}')
+
+        self.do_with_new_decoder(SingleLineCodeDecoder(self.tex_printer), inner_handle_code)
+
+
+class PreElementDecoder(Decoder):
+    def __init__(self, tex_printer):
+        super().__init__(tex_printer, sanitize_lstlisting)
+
+    def handle_code(self, element):
+        def inner_handle_code(self):
+            self.decode_children(element)
+
+        self.do_with_new_decoder(SingleLineCodeDecoder(self.tex_printer, sanitize_lstlisting), inner_handle_code)
+
+
+class SingleLineCodeDecoder(Decoder):
+    def __init__(self, text_printer, sanitiser=sanitize_single_line_code_listing):
+        super().__init__(text_printer, sanitiser)
+
+    def write_text(self, element):
+        trimmed_text = self.sanitizer(element)
         if len(trimmed_text) > 0:
-            self.out.write(trimmed_text)
-            if end_with_space and not sanitize_listing:
-                self.out.write(' ')
+            self.tex_printer.out.write(trimmed_text)
