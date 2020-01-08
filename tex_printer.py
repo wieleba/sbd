@@ -78,6 +78,7 @@ class TexPrinter:
     def write_content(self, content):
         self.out.write('\n')
         self.decoder.decode_children(content)
+        self.out.write('\\newpage')
 
 
 class Decoder:
@@ -127,6 +128,8 @@ class Decoder:
             self.handle_code(element)
         elif 'pre' == name:
             self.handle_pre(element)
+        elif 'h1' == name:
+            pass
         else:
             print(name, ' doesn''t have a handler')
         # element is NormalText, sanitize and write
@@ -248,10 +251,12 @@ class Decoder:
             self.out.write('\\section{' + title + '}\\label{sec:' + title.replace(' ', '_').lower() + '}\n')
         elif 'sect2' == section_type:
             self.out.write('\\subsection{' + title + '}')
-        elif 'dedication' == section_type:
+        elif section_type in ['dedication', 'copyright-page', 'foreword', 'preface']:
             self.out.write('\\section*{' + title + '}')
         elif 'index' == section_type:
             pass
+        elif section_type is not None:
+            print('Can''t handle section ', section_type)
 
         self.decode_children(element)
 
