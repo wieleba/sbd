@@ -112,3 +112,4 @@ test/
 *.iml
 *.toc
 *.html
+*.out
