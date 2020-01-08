@@ -10,11 +10,13 @@ preamble = '''
 \\usepackage{graphicx}
 \\usepackage{listings}
 \\usepackage[a4paper, margin=3cm]{geometry}
+\\usepackage{hyperref}
 \\setlength{\\parskip}{5pt}%
 \\setlength{\\parindent}{0.5cm}%
 \\begin{document}
 \\tableofcontents
-\\pagebreak
+\\addcontentsline{toc}{chapter}{Contents}
+\\newpage
 '''
 
 
