@@ -42,8 +42,8 @@ def sanitize(text):
         .replace('_', '\\_') \
         .replace('{', '\\{') \
         .replace('}', '\\}') \
-        .replace('>', '\\gt') \
-        .replace('<', '\\lt')
+        .replace('>=', '\\(\\ge\\)') \
+        .replace('<=', '\\(\\le\\)')
 
 
 class TexPrinter:
@@ -278,6 +278,11 @@ class GeneralHtmlDecoder(Decoder):
 class PreElementDecoder(Decoder):
     def __init__(self, tex_printer):
         super().__init__(tex_printer, sanitize_lstlisting)
+
+    def write_text(self, element):
+        sanitized_text = self.sanitizer(element)
+        if len(sanitized_text) > 0:
+            self.tex_printer.out.write(sanitized_text)
 
     def handle_code(self, element):
         def inner_handle_code(self):
